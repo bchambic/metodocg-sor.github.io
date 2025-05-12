@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Central Eléctrica - Análisis de Redes con Kirchhoff</title>
+    <style>
+        :root {
+            --primary-color: #005288;
+            --secondary-color: #FFD700;
+            --accent-color: #E31937;
+            --dark-color: #1A1A1A;
+            --light-color: #F0F0F0;
+            --panel-color: #003366;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--light-color);
+            margin: 0;
+            padding: 0;
+            background-color: var(--dark-color);
+            background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), 
+                              url('https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1352&q=80');
+            background-size: cover;
+            background-attachment: fixed;
+        }
+        
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .power-plant-header {
+            background-color: var(--panel-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--secondary-color);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .power-plant-header::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, var(--accent-color), var(--secondary-color), var(--primary-color));
+        }
+        
+        h1, h2, h3 {
+            color: var(--secondary-color);
+            text-align: center;
+            margin-top: 0;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        h2 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: white;
+        }
+        
+        .control-panel {
+            background-color: var(--panel-color);
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+        
+        .panel-title {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        
+        .panel-title h3 {
+            margin: 0;
+            padding: 0;
+            display: inline-block;
+        }
+        
+        .panel-title::before, .panel-title::after {
+            content: "⚡";
+            margin: 0 15px;
+            color: var(--secondary-color);
+        }
+        
+        .circuit-board {
+            background-color: #002244;
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            position: relative;
+        }
+        
+        .circuit-board::before {
+            content: "";
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            bottom: 10px;
+            border: 1px dashed rgba(255, 215, 0, 0.2);
+            border-radius: 4px;
+            pointer-events: none;
+        }
+        
+        .equations-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 20px 0;
+        }
+        
+        .equation-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            background-color: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 3px solid var(--accent-color);
+        }
+        
+        .coefficient-input {
+            width: 60px;
+            margin: 0 8px;
+            text-align: center;
+            padding: 8px;
+            border: 1px solid #444;
+            border-radius: 4px;
+            background-color: #111;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .coefficient-input:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 5px var(--secondary-color);
+        }
+        
+        .variable {
+            font-weight: bold;
+            margin: 0 8px;
+            min-width: 20px;
+            color: var(--secondary-color);
+        }
+        
+        .equals {
+            margin: 0 15px;
+            font-weight: bold;
+            color: var(--accent-color);
+            font-size: 1.2em;
+        }
+        
+        .result-input {
+            width: 80px;
+            margin-left: 8px;
+            padding: 8px;
+            text-align: center;
+            border: 1px solid #444;
+            border-radius: 4px;
+            background-color: #111;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .result-input:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 5px var(--secondary-color);
+        }
+        
+        .button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+            transition: all 0.3s;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            border-bottom: 3px solid rgba(0, 0, 0, 0.2);
+        }
+        
+        .button:hover {
+            background-color: #0066AA;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        .button:active {
+            transform: translateY(1px);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+        
+        .button-primary {
+            background-color: var(--accent-color);
+        }
+        
+        .button-primary:hover {
+            background-color: #FF2E4D;
+        }
+        
+        .button-secondary {
+            background-color: var(--secondary-color);
+            color: var(--dark-color);
+        }
+        
+        .button-secondary:hover {
+            background-color: #FFE44D;
+        }
+        
+        .button-group {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        
+        .control-knob {
+            margin: 0 20px;
+            text-align: center;
+        }
+        
+        .control-knob label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: var(--secondary-color);
+        }
+        
+        .control-knob input {
+            padding: 8px;
+            width: 100px;
+            text-align: center;
+            border-radius: 4px;
+            border: 1px solid #444;
+            background-color: #111;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .control-knob input:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 5px var(--secondary-color);
+        }
+        
+        .results-panel {
+            background-color: var(--panel-color);
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+        
+        .method-result {
+            margin-bottom: 30px;
+            background-color: rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            border-radius: 6px;
+            border-left: 3px solid var(--accent-color);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            background-color: rgba(0, 0, 0, 0.3);
+        }
+        
+        th, td {
+            border: 1px solid #444;
+            padding: 12px;
+            text-align: center;
+        }
+        
+        th {
+            background-color: rgba(0, 0, 0, 0.5);
+            color: var(--secondary-color);
+        }
+        
+        td {
+            color: white;
+        }
+        
+        tr:nth-child(even) {
+            background-color: rgba(0, 0, 0, 0.2);
+        }
+        
+        .iterations-table {
+            max-height: 300px;
+            overflow-y: auto;
+            display: block;
+        }
+        
+        .error-message {
+            color: #FF6B6B;
+            font-weight: bold;
+            background-color: rgba(139, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 4px;
+            border-left: 3px solid #FF6B6B;
+        }
+        
+        .success-message {
+            color: #7CFC00;
+            font-weight: bold;
+            background-color: rgba(0, 100, 0, 0.3);
+            padding: 10px;
+            border-radius: 4px;
+            border-left: 3px solid #7CFC00;
+        }
+        
+        .voltage-display {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: var(--secondary-color);
+            margin: 5px 0;
+        }
+        
+        .plus-sign {
+            margin: 0 8px;
+            color: #AAA;
+        }
+        
+        .power-meter {
+            height: 5px;
+            background-color: #333;
+            border-radius: 3px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        
+        .power-level {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-color), var(--secondary-color));
+            width: 0%;
+            transition: width 0.5s;
+        }
+        
+        .circuit-diagram {
+            text-align: center;
+            margin: 20px 0;
+            font-family: monospace;
+            white-space: pre;
+            color: var(--secondary-color);
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .control-knob {
+                margin: 10px 0;
+            }
+            
+            .equation-row {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .coefficient-input, .result-input {
+                width: 50px;
+                margin: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="power-plant-header">
+            <h1>CENTRAL ELÉCTRICA</h1>
+            <h2>Análisis de Redes de Resistencias usando las Leyes de Kirchhoff</h2>
+            <div class="power-meter">
+                <div class="power-level" id="power-level"></div>
+            </div>
+        </div>
+        
+        <div class="control-panel">
+            <div class="panel-title">
+                <h3>PANEL DE CONTROL</h3>
+            </div>
+            
+            <div class="controls">
+                <div class="control-knob">
+                    <label for="omega">PARÁMETRO ω (SOR)</label>
+                    <input type="number" id="omega" value="1.5" step="0.1" min="0.1" max="2">
+                </div>
+                
+                <div class="control-knob">
+                    <label for="tolerance">TOLERANCIA</label>
+                    <input type="number" id="tolerance" value="0.005" step="0.001" min="0.0001">
+                </div>
+                
+                <div class="control-knob">
+                    <label for="max-iter">ITERACIONES MÁX</label>
+                    <input type="number" id="max-iter" value="100" min="10" max="1000">
+                </div>
+            </div>
+            
+            <div class="button-group">
+                <button class="button button-secondary" id="btn-default">CIRCUITO POR DEFECTO</button>
+                <button class="button" id="btn-reset">REINICIAR</button>
+                <button class="button" id="btn-add-row">AÑADIR NODO</button>
+                <button class="button" id="btn-remove-row">ELIMINAR NODO</button>
+            </div>
+        </div>
+        
+        <div class="circuit-board">
+            <div class="panel-title">
+                <h3>ECUACIONES DE NODOS</h3>
+            </div>
+            
+            <div class="equations-container">
+                <div id="equations">
+                    <!-- Las ecuaciones se generarán dinámicamente -->
+                </div>
+            </div>
+            
+            <div class="circuit-diagram" id="circuit-diagram">
+                // Representación del circuito
+                // Los valores se actualizarán dinámicamente
+                V1 ──R1───┬───R2─── V2
+                         │
+                        R3
+                         │
+                        GND
+            </div>
+            
+            <div class="button-group">
+                <button class="button button-primary" id="btn-solve-cg">ANALIZAR CON CG</button>
+                <button class="button button-primary" id="btn-solve-sor">ANALIZAR CON SOR</button>
+                <button class="button button-primary" id="btn-solve-both">ANALIZAR CON AMBOS</button>
+            </div>
+        </div>
+        
+        <div class="results-panel" id="results">
+            <div class="panel-title">
+                <h3>RESULTADOS DEL ANÁLISIS</h3>
+            </div>
+            <!-- Resultados se mostrarán aquí -->
+        </div>
+    </div>
+
+    <script>
+        // Tamaño inicial del sistema (3x3)
+        let systemSize = 3;
+        
+        // Problema por defecto (red eléctrica - 3 nodos)
+        const defaultProblem = {
+            A: [
+                [5, -2, 0],
+                [-2, 6, -3],
+                [0, -3, 7]
+            ],
+            b: [10, 0, 20],
+            resistances: [0.2, 0.5, 0.333, 0.143], // R1, R2, R3, R4
+            voltages: [10, 0, 20] // V1, V2, V3
+        };
+        
+        // Inicializar la interfaz
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeEquations();
+            updateCircuitDiagram();
+            setupEventListeners();
+            animatePowerLevel();
+        });
+        
+        function animatePowerLevel() {
+            let level = 0;
+            let direction = 1;
+            const powerLevel = document.getElementById('power-level');
+            
+            setInterval(() => {
+                level += direction * 2;
+                if (level >= 100) direction = -1;
+                if (level <= 0) direction = 1;
+                powerLevel.style.width = level + '%';
+            }, 50);
+        }
+        
+        function updateCircuitDiagram() {
+            const diagram = document.getElementById('circuit-diagram');
+            let circuit = `// CIRCUITO ELÉCTRICO (${systemSize} nodos)\n`;
+            
+            if (systemSize === 3) {
+                circuit += `V1 (${defaultProblem.voltages[0]}V) ──R1(${defaultProblem.resistances[0]}Ω)───┬───R2(${defaultProblem.resistances[1]}Ω)─── V2 (${defaultProblem.voltages[1]}V)\n`;
+                circuit += `                         │\n`;
+                circuit += `                        R3(${defaultProblem.resistances[2]}Ω)\n`;
+                circuit += `                         │\n`;
+                circuit += `                        GND\n`;
+            } else if (systemSize === 2) {
+                circuit += `V1 (10V) ──R1(0.2Ω)───┬───R2(0.5Ω)─── V2 (0V)\n`;
+                circuit += `                        │\n`;
+                circuit += `                       GND\n`;
+            } else {
+                circuit += `// Configuración personalizada con ${systemSize} nodos\n`;
+                for (let i = 0; i < systemSize; i++) {
+                    circuit += `Nodo ${i+1} ── Resistencia ${i+1}\n`;
+                }
+            }
+            
+            diagram.textContent = circuit;
+        }
+        
+        function initializeEquations() {
+            const equationsContainer = document.getElementById('equations');
+            equationsContainer.innerHTML = '';
+            
+            for (let i = 0; i < systemSize; i++) {
+                const equationDiv = document.createElement('div');
+                equationDiv.className = 'equation-row';
+                
+                // Agregar coeficientes y variables
+                for (let j = 0; j < systemSize; j++) {
+                    // Input para coeficiente
+                    const coeffInput = document.createElement('input');
+                    coeffInput.type = 'number';
+                    coeffInput.className = 'coefficient-input';
+                    coeffInput.id = `a-${i}-${j}`;
+                    coeffInput.value = (i < defaultProblem.A.length && j < defaultProblem.A[i].length) ? defaultProblem.A[i][j] : 0;
+                    
+                    // Variable (V₁, V₂, etc.)
+                    const varSpan = document.createElement('span');
+                    varSpan.className = 'variable';
+                    varSpan.textContent = `V${j+1}`;
+                    
+                    equationDiv.appendChild(coeffInput);
+                    equationDiv.appendChild(varSpan);
+                    
+                    // Signo + (excepto para el último)
+                    if (j < systemSize - 1) {
+                        const plusSpan = document.createElement('span');
+                        plusSpan.className = 'plus-sign';
+                        plusSpan.textContent = '+';
+                        equationDiv.appendChild(plusSpan);
+                    }
+                }
+                
+                // Signo igual
+                const equalsSpan = document.createElement('span');
+                equalsSpan.className = 'equals';
+                equalsSpan.textContent = '=';
+                equationDiv.appendChild(equalsSpan);
+                
+                // Término independiente
+                const resultInput = document.createElement('input');
+                resultInput.type = 'number';
+                resultInput.className = 'result-input';
+                resultInput.id = `b-${i}`;
+                resultInput.value = (i < defaultProblem.b.length) ? defaultProblem.b[i] : 0;
+                equationDiv.appendChild(resultInput);
+                
+                equationsContainer.appendChild(equationDiv);
+            }
+            
+            updateCircuitDiagram();
+        }
+        
+        function setupEventListeners() {
+            document.getElementById('btn-default').addEventListener('click', function() {
+                systemSize = 3;
+                initializeEquations();
+            });
+            
+            document.getElementById('btn-reset').addEventListener('click', function() {
+                initializeEquations();
+            });
+            
+            document.getElementById('btn-add-row').addEventListener('click', function() {
+                if (systemSize < 6) {
+                    systemSize++;
+                    initializeEquations();
+                } else {
+                    alert("¡Advertencia! El análisis de más de 6 nodos puede ser computacionalmente intensivo.");
+                }
+            });
+            
+            document.getElementById('btn-remove-row').addEventListener('click', function() {
+                if (systemSize > 1) {
+                    systemSize--;
+                    initializeEquations();
+                }
+            });
+            
+            document.getElementById('btn-solve-cg').addEventListener('click', function() {
+                solveSystem('CG');
+            });
+            
+            document.getElementById('btn-solve-sor').addEventListener('click', function() {
+                solveSystem('SOR');
+            });
+            
+            document.getElementById('btn-solve-both').addEventListener('click', function() {
+                solveSystem('BOTH');
+            });
+        }
+        
+        function solveSystem(method) {
+            const resultsContainer = document.getElementById('results');
+            resultsContainer.innerHTML = '';
+            
+            // Mostrar título de resultados
+            const resultsTitle = document.createElement('div');
+            resultsTitle.className = 'panel-title';
+            const title = document.createElement('h3');
+            title.textContent = 'RESULTADOS DEL ANÁLISIS';
+            resultsTitle.appendChild(title);
+            resultsContainer.appendChild(resultsTitle);
+            
+            // Obtener parámetros
+            const omega = parseFloat(document.getElementById('omega').value);
+            const tolerance = parseFloat(document.getElementById('tolerance').value);
+            const maxIterations = parseInt(document.getElementById('max-iter').value);
+            
+            // Obtener matriz A y vector b de los inputs
+            const { A, b } = getMatrixFromInputs();
+            
+            // Validar la matriz
+            if (!isValidMatrix(A)) {
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'error-message';
+                errorDiv.innerHTML = '⚠️ ERROR: La matriz de conductancias debe ser cuadrada y simétrica para representar un circuito eléctrico válido.';
+                resultsContainer.appendChild(errorDiv);
+                return;
+            }
+            
+            // Resolver según el método seleccionado
+            if (method === 'CG' || method === 'BOTH') {
+                const cgResult = solveWithCG(A, b, tolerance, maxIterations);
+                displayResult('GRADIENTE CONJUGADO (CG)', cgResult, resultsContainer);
+            }
+            
+            if (method === 'SOR' || method === 'BOTH') {
+                const sorResult = solveWithSOR(A, b, omega, tolerance, maxIterations);
+                displayResult('SOBRERRELAJACIÓN (SOR)', sorResult, resultsContainer);
+            }
+        }
+        
+        function getMatrixFromInputs() {
+            const A = [];
+            const b = [];
+            
+            for (let i = 0; i < systemSize; i++) {
+                const row = [];
+                
+                for (let j = 0; j < systemSize; j++) {
+                    const value = parseFloat(document.getElementById(`a-${i}-${j}`).value) || 0;
+                    row.push(value);
+                }
+                
+                A.push(row);
+                b.push(parseFloat(document.getElementById(`b-${i}`).value) || 0);
+            }
+            
+            return { A, b };
+        }
+        
+        function isValidMatrix(A) {
+            // Verificar que es cuadrada
+            const n = A.length;
+            for (let i = 0; i < n; i++) {
+                if (A[i].length !== n) {
+                    return false;
+                }
+            }
+            
+            // Verificar simetría (para circuitos eléctricos)
+            for (let i = 0; i < n; i++) {
+                for (let j = 0; j < i; j++) {
+                    if (A[i][j] !== A[j][i]) {
+                        return false;
+                    }
+                }
+            }
+            
+            return true;
+        }
+        
+        function solveWithCG(A, b, tolerance, maxIterations) {
+            const n = A.length;
+            let x = new Array(n).fill(0);
+            let r = vectorSubtract(b, matrixVectorMultiply(A, x));
+            let p = [...r];
+            let iterations = 0;
+            let errorHistory = [];
+            let solutionHistory = [];
+            
+            const startTime = performance.now();
+            
+            while (iterations < maxIterations) {
+                const Ap = matrixVectorMultiply(A, p);
+                const rDot = dotProduct(r, r);
+                const alpha = rDot / dotProduct(p, Ap);
+                
+                // Actualizar solución
+                x = vectorAdd(x, vectorScale(p, alpha));
+                solutionHistory.push([...x]);
+                
+                // Calcular nuevo residuo
+                const rNew = vectorSubtract(r, vectorScale(Ap, alpha));
+                
+                // Calcular error
+                const error = vectorNorm(rNew);
+                errorHistory.push(error);
+                
+                if (error < tolerance) {
+                    break;
+                }
+                
+                // Actualizar p
+                const beta = dotProduct(rNew, rNew) / rDot;
+                p = vectorAdd(rNew, vectorScale(p, beta));
+                
+                r = rNew;
+                iterations++;
+            }
+            
+            const endTime = performance.now();
+            const timeElapsed = endTime - startTime;
+            
+            return {
+                solution: x,
+                iterations,
+                errorHistory,
+                solutionHistory,
+                timeElapsed,
+                converged: iterations < maxIterations
+            };
+        }
+        
+        function solveWithSOR(A, b, omega, tolerance, maxIterations) {
+            const n = A.length;
+            let x = new Array(n).fill(0);
+            let iterations = 0;
+            let errorHistory = [];
+            let solutionHistory = [];
+            
+            const startTime = performance.now();
+            
+            while (iterations < maxIterations) {
+                let maxError = 0;
+                const xNew = [...x];
+                
+                for (let i = 0; i < n; i++) {
+                    let sigma = 0;
+                    
+                    for (let j = 0; j < n; j++) {
+                        if (j !== i) {
+                            sigma += A[i][j] * xNew[j];
+                        }
+                    }
+                    
+                    const xOld = xNew[i];
+                    xNew[i] = (1 - omega) * xOld + (omega / A[i][i]) * (b[i] - sigma);
+                    
+                    // Calcular error para este componente
+                    const componentError = Math.abs(xNew[i] - xOld);
+                    if (componentError > maxError) {
+                        maxError = componentError;
+                    }
+                }
+                
+                // Registrar error y solución
+                errorHistory.push(maxError);
+                solutionHistory.push([...xNew]);
+                
+                x = xNew;
+                iterations++;
+                
+                if (maxError < tolerance) {
+                    break;
+                }
+            }
+            
+            const endTime = performance.now();
+            const timeElapsed = endTime - startTime;
+            
+            return {
+                solution: x,
+                iterations,
+                errorHistory,
+                solutionHistory,
+                timeElapsed,
+                converged: iterations < maxIterations
+            };
+        }
+        
+        function displayResult(method, result, container) {
+            const methodDiv = document.createElement('div');
+            methodDiv.className = 'method-result';
+            
+            const methodTitle = document.createElement('h3');
+            methodTitle.style.color = method.includes('CG') ? '#7CFC00' : '#FFD700';
+            methodTitle.textContent = method;
+            methodDiv.appendChild(methodTitle);
+            
+            if (!result.converged) {
+                const warning = document.createElement('div');
+                warning.className = 'error-message';
+                warning.innerHTML = `⚠️ ADVERTENCIA: El método no convergió en ${result.iterations} iteraciones. Considere aumentar el número de iteraciones o ajustar la tolerancia.`;
+                methodDiv.appendChild(warning);
+            } else {
+                const success = document.createElement('div');
+                success.className = 'success-message';
+                success.innerHTML = `✅ CONVERGENCIA ALCANZADA en ${result.iterations} iteraciones. Tiempo de cálculo: <strong>${result.timeElapsed.toFixed(2)} ms</strong>`;
+                methodDiv.appendChild(success);
+            }
+            
+            // Mostrar solución (tensiones en los nodos)
+            const solutionTitle = document.createElement('h4');
+            solutionTitle.textContent = 'TENSIONES EN LOS NODOS:';
+            solutionTitle.style.color = '#FFD700';
+            methodDiv.appendChild(solutionTitle);
+            
+            const solutionTable = document.createElement('table');
+            const headerRow = solutionTable.insertRow();
+            
+            // Encabezados de tabla
+            const thNode = document.createElement('th');
+            thNode.textContent = 'NODO';
+            headerRow.appendChild(thNode);
+            
+            const thVoltage = document.createElement('th');
+            thVoltage.textContent = 'TENSIÓN (V)';
+            headerRow.appendChild(thVoltage);
+            
+            // Valores de solución
+            for (let i = 0; i < result.solution.length; i++) {
+                const row = solutionTable.insertRow();
+                
+                const cellNode = row.insertCell();
+                cellNode.textContent = `Nodo ${i+1}`;
+                
+                const cellVoltage = row.insertCell();
+                cellVoltage.textContent = result.solution[i].toFixed(6) + ' V';
+                cellVoltage.style.fontWeight = 'bold';
+                cellVoltage.style.color = '#7CFC00';
+            }
+            
+            methodDiv.appendChild(solutionTable);
+            
+            // Mostrar historial de errores
+            const errorTitle = document.createElement('h4');
+            errorTitle.textContent = 'HISTORIAL DE CONVERGENCIA:';
+            errorTitle.style.color = '#FFD700';
+            methodDiv.appendChild(errorTitle);
+            
+            const errorTable = document.createElement('table');
+            errorTable.className = 'iterations-table';
+            
+            const errorHeader = errorTable.insertRow();
+            errorHeader.innerHTML = '<th>ITERACIÓN</th><th>ERROR</th><th>MEJORA</th>';
+            
+            for (let i = 0; i < result.errorHistory.length; i++) {
+                const row = errorTable.insertRow();
+                
+                const iterCell = row.insertCell();
+                iterCell.textContent = i+1;
+                
+                const errorCell = row.insertCell();
+                errorCell.textContent = result.errorHistory[i].toExponential(4);
+                
+                const improvementCell = row.insertCell();
+                if (i > 0) {
+                    const improvement = (result.errorHistory[i-1] - result.errorHistory[i]) / result.errorHistory[i-1] * 100;
+                    improvementCell.textContent = improvement.toFixed(2) + '%';
+                    
+                    if (improvement > 50) {
+                        improvementCell.style.color = '#7CFC00';
+                    } else if (improvement > 20) {
+                        improvementCell.style.color = '#FFD700';
+                    } else {
+                        improvementCell.style.color = '#FF6B6B';
+                    }
+                } else {
+                    improvementCell.textContent = '-';
+                }
+            }
+            
+            methodDiv.appendChild(errorTable);
+            
+            // Mostrar gráfico de convergencia simple
+            const convergenceDiv = document.createElement('div');
+            convergenceDiv.style.margin = '20px 0';
+            convergenceDiv.innerHTML = '<h4>GRÁFICO DE CONVERGENCIA:</h4>';
+            
+            const convergenceGraph = document.createElement('div');
+            convergenceGraph.style.height = '150px';
+            convergenceGraph.style.backgroundColor = '#001122';
+            convergenceGraph.style.border = '1px solid #444';
+            convergenceGraph.style.borderRadius = '4px';
+            convergenceGraph.style.position = 'relative';
+            convergenceGraph.style.overflow = 'hidden';
+            
+            // Crear líneas de referencia
+            for (let i = 1; i <= 4; i++) {
+                const refLine = document.createElement('div');
+                refLine.style.position = 'absolute';
+                refLine.style.left = '0';
+                refLine.style.right = '0';
+                refLine.style.height = '1px';
+                refLine.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+                refLine.style.top = `${i * 25}%`;
+                convergenceGraph.appendChild(refLine);
+            }
+            
+            // Crear línea de tolerancia
+            const tolLine = document.createElement('div');
+            tolLine.style.position = 'absolute';
+            tolLine.style.left = '0';
+            tolLine.style.right = '0';
+            tolLine.style.height = '2px';
+            tolLine.style.backgroundColor = '#FF6B6B';
+            tolLine.style.top = '90%';
+            convergenceGraph.appendChild(tolLine);
+            
+            const tolLabel = document.createElement('div');
+            tolLabel.style.position = 'absolute';
+            tolLabel.style.right = '10px';
+            tolLabel.style.top = '85%';
+            tolLabel.style.color = '#FF6B6B';
+            tolLabel.style.fontSize = '12px';
+            tolLabel.textContent = 'Tolerancia';
+            convergenceGraph.appendChild(tolLabel);
+            
+            // Dibujar curva de convergencia
+            const maxError = Math.max(...result.errorHistory);
+            const minError = Math.min(...result.errorHistory);
+            const scaleFactor = 100 / (Math.log10(maxError) - Math.log10(minError));
+            
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            path.setAttribute('width', '100%');
+            path.setAttribute('height', '100%');
+            path.style.position = 'absolute';
+            path.style.top = '0';
+            path.style.left = '0';
+            
+            let pathData = 'M0 100 ';
+            for (let i = 0; i < result.errorHistory.length; i++) {
+                const x = (i / (result.errorHistory.length - 1)) * 100;
+                const y = 100 - (Math.log10(result.errorHistory[i]) - Math.log10(minError)) * scaleFactor;
+                pathData += `L${x} ${y} `;
+            }
+            
+            const pathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            pathElement.setAttribute('d', pathData);
+            pathElement.setAttribute('stroke', method.includes('CG') ? '#7CFC00' : '#FFD700');
+            pathElement.setAttribute('stroke-width', '2');
+            pathElement.setAttribute('fill', 'none');
+            path.appendChild(pathElement);
+            
+            convergenceGraph.appendChild(path);
+            convergenceDiv.appendChild(convergenceGraph);
+            methodDiv.appendChild(convergenceDiv);
+            
+            container.appendChild(methodDiv);
+        }
+        
+        // Funciones auxiliares de álgebra lineal
+        function matrixVectorMultiply(A, x) {
+            return A.map(row => dotProduct(row, x));
+        }
+        
+        function dotProduct(a, b) {
+            return a.reduce((sum, val, i) => sum + val * b[i], 0);
+        }
+        
+        function vectorAdd(a, b) {
+            return a.map((val, i) => val + b[i]);
+        }
+        
+        function vectorSubtract(a, b) {
+            return a.map((val, i) => val - b[i]);
+        }
+        
+        function vectorScale(v, scalar) {
+            return v.map(val => val * scalar);
+        }
+        
+        function vectorNorm(v) {
+            return Math.sqrt(dotProduct(v, v));
+        }
+    </script>
+</body>
+</html>
